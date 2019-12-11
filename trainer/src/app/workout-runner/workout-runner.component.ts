@@ -18,6 +18,8 @@ export class WorkoutRunnerComponent implements OnInit {
   currentExerciseIndex: number; 
   currentExercise: ExercisePlan; 
   exerciseRunningDuration: number; 
+  exerciseTrackingInterval: number;
+  workoutPaused: boolean;
 
   ngOnInit() { 
     this.workoutPlan = this.buildWorkout(); 
@@ -35,20 +37,28 @@ export class WorkoutRunnerComponent implements OnInit {
  startExercise(exercisePlan: ExercisePlan) { 
   this.currentExercise = exercisePlan; 
   this.exerciseRunningDuration = 0; 
-  const intervalId = setInterval(() => { 
-    if (this.exerciseRunningDuration >=  this.currentExercise.duration) { 
-      clearInterval(intervalId); 
-      const next: ExercisePlan = this.getNextExercise(); 
-      if (next) {
-        if (next !== this.restExercise) {
-          this.currentExerciseIndex++;
-           }
-        this.startExercise(next);}
-      else { console.log('Workout complete!'); } 
-   } 
-    else { this.exerciseRunningDuration++; } 
-  }, 1000); 
-} 
+  this.startExerciseTimeTracking();
+ } 
+
+  startExerciseTimeTracking() {
+    this.exerciseTrackingInterval = window.setInterval(() => {
+        if (this.exerciseRunningDuration >= this.currentExercise.duration) {
+          clearInterval(this.exerciseTrackingInterval);
+          const next: ExercisePlan = this.getNextExercise();
+          if (next) {
+            if (next !== this.restExercise) {
+              this.currentExerciseIndex++;
+            }
+            this.startExercise(next)
+          } else {
+            console.log('Workout complete!');
+          }
+          return;
+        } 
+        ++this.exerciseRunningDuration;
+        --this.workoutTimeRemaining;
+      }, 1000);
+  }
   getNextExercise(): ExercisePlan { 
     let nextExercise: ExercisePlan = null; 
     if (this.currentExercise === this.restExercise) { 
@@ -69,12 +79,12 @@ export class WorkoutRunnerComponent implements OnInit {
           'A jumping jack or star jump, also called side-straddle hop is a physical jumping exercise.',
           'JumpingJacks.png',
           'jumpingjacks.wav',
-          `Assume an erect position, with feet together and arms at your side.
-                            Slightly bend your knees, and propel yourself a few inches into the air.
-                            While in air, bring your legs out to the side about shoulder width or slightly wider.
-                            As you are moving your legs outward, you should raise your arms up over your head; arms should be
-                            slightly bent throughout the entire in-air movement.
-                            Your feet should land shoulder width or wider as your hands meet above your head with arms slightly bent`,
+          `Assume an erect position, with feet together and arms at your side. <br>
+                            Slightly bend your knees, and propel yourself a few inches into the air. <br>
+                            While in air, bring your legs out to the side about shoulder width or slightly wider. <br>
+                            As you are moving your legs outward, you should raise your arms up over your head; arms should be <br>
+                            slightly bent throughout the entire in-air movement. <br>
+                            Your feet should land shoulder width or wider as your hands meet above your head with arms slightly bent <br>`,
           ['dmYwZH_BNd0', 'BABOdJ-2Z6o', 'c4DAnQ6DtF8']),
         30));
 
@@ -241,5 +251,25 @@ export class WorkoutRunnerComponent implements OnInit {
         30));
 
     return workout;
+  }
+
+  pause() {
+    clearInterval(this.exerciseTrackingInterval);
+    this.workoutPaused = true;
+  }
+
+  resume() {
+    this.startExerciseTimeTracking();
+    this.workoutPaused = false;
+  }
+
+  pauseResumeToggle() {
+    if(this.workoutPaused){ this.resume()}
+    else {this.pause();}
+  }
+  onKeyPressed(event: KeyboardEvent) {
+    if(event.which === 80 || event.which === 112) {
+      this.pauseResumeToggle();
+    }
   }
 }
