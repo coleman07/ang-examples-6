@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {WorkoutPlan, ExercisePlan, Exercise} from "./model";
-import { from } from 'rxjs';
+import { Router } from '@angular/router'
+
 @Component({
   selector: 'abe-workout-runner',
  templateUrl: './workout-runner.component.html',
@@ -10,7 +11,7 @@ import { from } from 'rxjs';
 })
 export class WorkoutRunnerComponent implements OnInit {
 
-  constructor() { }
+  constructor(private router: Router) { }
 
   workoutPlan: WorkoutPlan; 
   restExercise: ExercisePlan; 
@@ -51,7 +52,7 @@ export class WorkoutRunnerComponent implements OnInit {
             }
             this.startExercise(next)
           } else {
-            console.log('Workout complete!');
+            this.router.navigate(['/finish'])
           }
           return;
         } 
@@ -269,7 +270,7 @@ export class WorkoutRunnerComponent implements OnInit {
   }
   onKeyPressed(event: KeyboardEvent) {
     if(event.which === 80 || event.which === 112) {
-      this.pauseResumeToggle();
+      this.pauseResumeToggle()
     }
   }
 }
