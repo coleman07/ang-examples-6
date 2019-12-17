@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {WorkoutPlan, ExercisePlan, Exercise} from "./model";
-import { Router } from '@angular/router'
+import { Router } from '@angular/router';
+import { WorkoutHistoryTrackerService } from '../core/workout-history-tracker.service';
 
 @Component({
   selector: 'abe-workout-runner',
@@ -9,9 +10,10 @@ import { Router } from '@angular/router'
     <pre>Time Left: {{currentExercise.duration - exerciseRunningDuration}}</pre>`,*/
   styles: []
 })
-export class WorkoutRunnerComponent implements OnInit {
+export class WorkoutRunnerComponent implements OnInit, OnDestroy {
 
-  constructor(private router: Router) { }
+  constructor(private router: Router,
+  private tracker: WorkoutHistoryTrackerService) { }
 
   workoutPlan: WorkoutPlan; 
   restExercise: ExercisePlan; 
@@ -29,7 +31,12 @@ export class WorkoutRunnerComponent implements OnInit {
       this.workoutPlan.restBetweenExercise);  
     this.start(); 
   } 
+
+  ngOnDestroy(){
+    this.tracker.endTracking(false);
+  }
   start() { 
+    this.tracker.startTracking();
     this.workoutTimeRemaining =  
     this.workoutPlan.totalWorkoutDuration(); 
     this.currentExerciseIndex = 0;  
@@ -45,6 +52,9 @@ export class WorkoutRunnerComponent implements OnInit {
     this.exerciseTrackingInterval = window.setInterval(() => {
         if (this.exerciseRunningDuration >= this.currentExercise.duration) {
           clearInterval(this.exerciseTrackingInterval);
+          if (this.currentExercise !== this.restExercise){
+            this.tracker.exerciseComplete(this.workoutPlan.exercises[this.currentExerciseIndex]);
+          }
           const next: ExercisePlan = this.getNextExercise();
           if (next) {
             if (next !== this.restExercise) {
@@ -52,6 +62,7 @@ export class WorkoutRunnerComponent implements OnInit {
             }
             this.startExercise(next)
           } else {
+            this.tracker.endTracking(true);
             this.router.navigate(['/finish'])
           }
           return;
@@ -71,7 +82,7 @@ export class WorkoutRunnerComponent implements OnInit {
     return nextExercise; 
 } 
   buildWorkout(): WorkoutPlan {
-    const workout = new WorkoutPlan('7MinWorkout', '7 Minute Workout', 10, []);
+    const workout = new WorkoutPlan('7MinWorkout', '7 Minute Workout', 1, []);
     workout.exercises.push(
       new ExercisePlan(
         new Exercise(
@@ -87,7 +98,7 @@ export class WorkoutRunnerComponent implements OnInit {
                             slightly bent throughout the entire in-air movement. <br>
                             Your feet should land shoulder width or wider as your hands meet above your head with arms slightly bent <br>`,
           ['dmYwZH_BNd0', 'BABOdJ-2Z6o', 'c4DAnQ6DtF8']),
-        30));
+        3));
 
     workout.exercises.push(
       new ExercisePlan(
@@ -100,9 +111,9 @@ export class WorkoutRunnerComponent implements OnInit {
           `Place your back against a wall with your feet shoulder width apart and a little ways out from the wall.
           Then, keeping your back against the wall, lower your hips until your knees form right angles.`,
           ['y-wV4Venusw', 'MMV3v4ap4ro']),
-        30));
+        3));
 
-    workout.exercises.push(
+   /* workout.exercises.push(
       new ExercisePlan(
         new Exercise(
           'pushUp',
@@ -249,7 +260,7 @@ export class WorkoutRunnerComponent implements OnInit {
           With your abdominals gently contracted, lift your hips off the floor, maintaining the line.
           Keep your hips square and your neck in line with your spine. Hold the position.`,
           ['wqzrb67Dwf8', '_rdfjFSFKMY']),
-        30));
+        30));*/
 
     return workout;
   }
